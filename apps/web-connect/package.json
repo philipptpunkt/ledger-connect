@@ -1,0 +1,42 @@
+{
+  "name": "web-connect",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ledgerhq/context-module": "^1.16.0",
+    "@ledgerhq/device-management-kit": "^1.2.0",
+    "@ledgerhq/device-signer-kit-ethereum": "^1.14.0",
+    "@ledgerhq/device-transport-kit-web-ble": "^1.3.2",
+    "@ledgerhq/device-transport-kit-web-hid": "^1.2.3",
+    "@ledgerhq/lumen-design-core": "^0.1.10",
+    "@ledgerhq/lumen-ui-react": "^0.1.21",
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "ethers": "^6.16.0",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "rxjs": "^7.8.2",
+    "tailwind-merge": "^2.6.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}
