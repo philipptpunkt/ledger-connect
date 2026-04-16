@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Linking } from 'react-native';
-import { Box, Button, Text } from '@ledgerhq/lumen-ui-rnative';
+import {
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { DeviceStatus } from '@ledgerhq/device-management-kit';
 import {
   buildCallbackUrl,
@@ -143,55 +149,53 @@ export function SignScreen({ navigation, route }: Props) {
   };
 
   return (
-    <Box
-      lx={{
-        flex: 1,
-        justifyContent: 'center',
-        gap: 's16',
-        paddingHorizontal: 's24',
-        paddingVertical: 's24',
-      }}
-    >
-      <Text typography="heading4SemiBold">Sign transaction</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Sign transaction</Text>
 
       {hasTransaction ? null : (
-        <Text typography="body2" lx={{ color: 'error' }}>
+        <Text style={styles.errorText}>
           Missing transaction parameters. Provide either tx or structured
           fields.
         </Text>
       )}
 
-      <Text typography="body2" lx={{ color: 'muted' }}>
+      <Text style={styles.bodyMuted}>
         Ledger Connect prepares the signing request and forwards the details to
         your Ledger device for review.
       </Text>
 
-      {deviceHint ? (
-        <Text typography="body2" lx={{ color: 'warning' }}>
-          {deviceHint}
-        </Text>
-      ) : null}
+      {deviceHint ? <Text style={styles.warningText}>{deviceHint}</Text> : null}
 
-      <Box lx={{ flexDirection: 'row', gap: 's8' }}>
-        <Button
-          appearance="accent"
+      <View style={styles.buttonRow}>
+        <Pressable
+          style={[
+            styles.button,
+            styles.primaryButton,
+            (!hasTransaction || !canSign || state.status === 'pending') &&
+              styles.buttonDisabled,
+          ]}
           onPress={handleSign}
-          disabled={!hasTransaction || !canSign}
-          loading={state.status === 'pending'}
+          disabled={!hasTransaction || !canSign || state.status === 'pending'}
         >
-          Sign transaction
-        </Button>
-        <Button
-          appearance="gray"
+          <Text style={styles.primaryButtonText}>
+            {state.status === 'pending' ? 'Signing...' : 'Sign transaction'}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.button,
+            styles.secondaryButton,
+            state.status !== 'pending' && styles.buttonDisabled,
+          ]}
           onPress={cancel}
           disabled={state.status !== 'pending'}
         >
-          Cancel
-        </Button>
-      </Box>
+          <Text style={styles.secondaryButtonText}>Cancel</Text>
+        </Pressable>
+      </View>
 
       {state.status === 'pending' ? (
-        <Text typography="body2" lx={{ color: 'warning' }}>
+        <Text style={styles.warningText}>
           Preparing the request and waiting for confirmation on your Ledger
           device
           {state.step ? ` (${state.step})` : ''}
@@ -202,24 +206,98 @@ export function SignScreen({ navigation, route }: Props) {
       ) : null}
 
       {state.status === 'completed' ? (
-        <Box lx={{ gap: 's4' }}>
-          <Text typography="body2SemiBold" lx={{ color: 'success' }}>
+        <View style={styles.resultCard}>
+          <Text style={styles.successText}>
             Transaction signed successfully.
           </Text>
-          <Text typography="body3">r: {state.signature.r}</Text>
-          <Text typography="body3">s: {state.signature.s}</Text>
-          <Text typography="body3">v: {state.signature.v}</Text>
-          <Text typography="body3">
+          <Text style={styles.codeText}>r: {state.signature.r}</Text>
+          <Text style={styles.codeText}>s: {state.signature.s}</Text>
+          <Text style={styles.codeText}>v: {state.signature.v}</Text>
+          <Text style={styles.codeText}>
             signature: {buildSignatureHex(state.signature)}
           </Text>
-        </Box>
+        </View>
       ) : null}
 
       {state.status === 'error' ? (
-        <Text typography="body2" lx={{ color: 'error' }}>
-          {state.message}
-        </Text>
+        <Text style={styles.errorText}>{state.message}</Text>
       ) : null}
-    </Box>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+    backgroundColor: '#ffffff',
+  },
+  title: {
+    color: '#111111',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  bodyMuted: {
+    color: '#666666',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  button: {
+    flex: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#111111',
+  },
+  secondaryButton: {
+    backgroundColor: '#f1f1f1',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  primaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButtonText: {
+    color: '#111111',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  warningText: {
+    color: '#8a5a00',
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  successText: {
+    color: '#1b5e20',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  errorText: {
+    color: '#c62828',
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  resultCard: {
+    gap: 6,
+    borderRadius: 12,
+    backgroundColor: '#f6f8f6',
+    padding: 16,
+  },
+  codeText: {
+    color: '#222222',
+    fontSize: 13,
+  },
+});

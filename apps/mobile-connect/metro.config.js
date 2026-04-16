@@ -17,15 +17,6 @@ const config = {
   projectRoot: __dirname,
   watchFolders: [path.resolve(__dirname, '..', '..')],
   resolver: {
-    unstable_enablePackageExports: true,
-    unstable_conditionNames: ['browser', 'react-native', 'import', 'require'],
-    resolverMainFields: [
-      'browser',
-      'react-native',
-      'import',
-      'require',
-      'main',
-    ],
     nodeModulesPaths,
   },
 };
