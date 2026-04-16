@@ -15,6 +15,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       Connect: 'connect',
       Sign: 'sign',
+      Accounts: 'accounts',
     },
   },
 };

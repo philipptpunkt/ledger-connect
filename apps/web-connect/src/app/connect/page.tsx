@@ -36,8 +36,7 @@ function ConnectPageContent() {
           <div className="flex flex-col gap-8">
             <p className="heading-3-semi-bold">Continue on device</p>
             <p className="body-2 text-muted">
-              Your Ledger is connected. We&apos;ll continue to the signing flow
-              automatically.
+              Your Ledger is connected. We&apos;ll continue automatically.
             </p>
           </div>
         ) : null}

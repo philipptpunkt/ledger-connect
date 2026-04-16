@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:mobile": "pnpm --filter mobile-connect start",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck"
   },

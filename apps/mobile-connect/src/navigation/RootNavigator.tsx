@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { linking } from './linking';
 import { RootStackParamList } from './types';
+import { AccountsScreen } from '@/screens/AccountsScreen';
 import { ConnectScreen } from '@/screens/ConnectScreen';
 import { SignScreen } from '@/screens/SignScreen';
 
@@ -21,6 +22,11 @@ export function RootNavigator() {
           name="Sign"
           component={SignScreen}
           options={{ title: 'Sign transaction' }}
+        />
+        <Stack.Screen
+          name="Accounts"
+          component={AccountsScreen}
+          options={{ title: 'Accounts' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

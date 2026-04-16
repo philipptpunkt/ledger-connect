@@ -18,4 +18,19 @@ buildscript {
     }
 }
 
+def absoluteNodeExecutable = "/Users/philipp.trentmann/.proto/shims/node"
+def resolvedReactNativeDir =
+    file("../node_modules/react-native").toPath().toRealPath().toFile()
+
+// Some React Native dependencies resolve React Native paths during Gradle
+// configuration and invoke "node" directly. Expose the Node binary at the root
+// project level so all subprojects use a deterministic executable.
+ext.react = [
+    nodeExecutableAndArgs: [absoluteNodeExecutable],
+]
+
+// react-native-gesture-handler checks this property first and skips its internal
+// "node --print require.resolve(...)" fallback when it is set.
+ext.REACT_NATIVE_NODE_MODULES_DIR = resolvedReactNativeDir.absolutePath
+
 apply plugin: "com.facebook.react.rootproject"

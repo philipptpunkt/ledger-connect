@@ -9,9 +9,20 @@ export type SignRouteParams = {
   callback?: string;
 };
 
+/** Query-style params for the accounts discovery flow (EVM). */
+export type AccountsRouteParams = {
+  /** Defaults to Ethereum mainnet (1) in @ledgerhq/ledger-connect-core when omitted. */
+  chainId?: string;
+  count?: string;
+  startIndex?: string;
+  rpcUrl?: string;
+  callback?: string;
+};
+
 export type RootStackParamList = {
   Connect: {
-    returnTo?: SignRouteParams;
+    returnTo?: SignRouteParams | AccountsRouteParams;
   };
   Sign: SignRouteParams;
+  Accounts: AccountsRouteParams;
 };

@@ -22,6 +22,7 @@ import { useDmk } from '@/providers/DmkProvider';
 
 const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
 const DISCONNECT_GRACE_MS = 1200;
+const MAX_DISCONNECT_RETRIES = 2;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Sign'>;
 
@@ -54,6 +55,7 @@ export function SignScreen({ navigation, route }: Props) {
   const disconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const disconnectRetryCountRef = useRef(0);
 
   useEffect(() => {
     if (sessionId) {
@@ -90,6 +92,7 @@ export function SignScreen({ navigation, route }: Props) {
               clearTimeout(disconnectTimeoutRef.current);
               disconnectTimeoutRef.current = null;
             }
+            disconnectRetryCountRef.current = 0;
             setCanSign(true);
             setDeviceHint(null);
             break;
@@ -98,6 +101,7 @@ export function SignScreen({ navigation, route }: Props) {
               clearTimeout(disconnectTimeoutRef.current);
               disconnectTimeoutRef.current = null;
             }
+            disconnectRetryCountRef.current = 0;
             setCanSign(false);
             setDeviceHint(
               'Unlock your Ledger device with your PIN before starting the signing flow.',
@@ -107,9 +111,19 @@ export function SignScreen({ navigation, route }: Props) {
             setCanSign(false);
             if (disconnectTimeoutRef.current === null) {
               disconnectTimeoutRef.current = setTimeout(() => {
-                setDeviceHint('Your Ledger device is no longer connected.');
-                setSessionId(null);
                 disconnectTimeoutRef.current = null;
+                disconnectRetryCountRef.current += 1;
+
+                if (disconnectRetryCountRef.current > MAX_DISCONNECT_RETRIES) {
+                  setDeviceHint('Your Ledger device is no longer connected.');
+                  cancel();
+                  setSessionId(null);
+                  return;
+                }
+
+                setDeviceHint(
+                  `Connection lost. Waiting for your Ledger to reconnect (${disconnectRetryCountRef.current}/${MAX_DISCONNECT_RETRIES}).`,
+                );
               }, DISCONNECT_GRACE_MS);
             }
             break;
@@ -134,7 +148,7 @@ export function SignScreen({ navigation, route }: Props) {
       }
       stateSub.unsubscribe();
     };
-  }, [dmk, sessionId, setSessionId]);
+  }, [cancel, dmk, sessionId, setSessionId]);
 
   const handleSign = () => {
     if (!canSign) {

@@ -2,8 +2,29 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { parseStructuredFields } from '@ledgerhq/ledger-connect-core';
+
 import { useConnectionCheck } from '@/hooks/useConnectionCheck';
-import { RootStackParamList } from '@/navigation/types';
+import {
+  type AccountsRouteParams,
+  RootStackParamList,
+  type SignRouteParams,
+} from '@/navigation/types';
+
+function isSignReturnTo(
+  rt: SignRouteParams | AccountsRouteParams,
+): rt is SignRouteParams {
+  if ('tx' in rt && rt.tx) {
+    return true;
+  }
+  const structured = parseStructuredFields({
+    get: name => {
+      const v = rt[name as keyof typeof rt];
+      return typeof v === 'string' ? v : null;
+    },
+  });
+  return structured !== null;
+}
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Connect'>;
 
@@ -21,7 +42,12 @@ export function ConnectScreen({ navigation, route }: Props) {
       return;
     }
 
-    navigation.replace('Sign', route.params.returnTo);
+    const returnTo = route.params.returnTo;
+    if (isSignReturnTo(returnTo)) {
+      navigation.replace('Sign', returnTo);
+    } else {
+      navigation.replace('Accounts', returnTo as AccountsRouteParams);
+    }
   }, [navigation, phase, route.params?.returnTo, sessionId]);
 
   return (
@@ -30,8 +56,7 @@ export function ConnectScreen({ navigation, route }: Props) {
         <View style={styles.group}>
           <Text style={styles.title}>Continue on device</Text>
           <Text style={styles.bodyMuted}>
-            Your Ledger is connected. We will continue to the signing flow
-            automatically.
+            Your Ledger is connected. We will continue automatically.
           </Text>
         </View>
       ) : null}
