@@ -1,5 +1,6 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
+  output: "standalone",
   transpilePackages: [
     "@ledgerhq/context-module",
     "@ledgerhq/device-management-kit",
