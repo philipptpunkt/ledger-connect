@@ -1,0 +1,20 @@
+pluginManagement {
+    includeBuild(
+        file("../node_modules/@react-native/gradle-plugin")
+            .toPath()
+            .toRealPath()
+            .toFile()
+            .absolutePath
+    )
+}
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'MobileConnect'
+include ':app'
+includeBuild(
+    file("../node_modules/@react-native/gradle-plugin")
+        .toPath()
+        .toRealPath()
+        .toFile()
+        .absolutePath
+)

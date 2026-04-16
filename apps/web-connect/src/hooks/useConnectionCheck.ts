@@ -6,19 +6,13 @@ import {
   DeviceStatus,
   type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
+import { type ConnectionPhase } from "@ledgerhq/ledger-connect-core";
 import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { type Subscription } from "rxjs";
 
 import { useDeviceSession } from "@/providers/DeviceSessionProvider";
 import { useDmk } from "@/providers/DmkProvider";
-
-export type ConnectionPhase =
-  | "checking"
-  | "needsSelection"
-  | "connecting"
-  | "locked"
-  | "connected";
 
 type TransportChoice = "usb" | "bluetooth";
 

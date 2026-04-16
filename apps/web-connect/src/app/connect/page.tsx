@@ -1,34 +1,33 @@
-"use client"
+"use client";
 
-import { Suspense, useEffect } from "react"
-import { Button } from "@ledgerhq/lumen-ui-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { isSafeInternalRoute } from "@ledgerhq/ledger-connect-core";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { useConnectionCheck } from "@/hooks/useConnectionCheck"
+import { useConnectionCheck } from "@/hooks/useConnectionCheck";
 
 function ConnectPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     phase,
     sessionId,
     errorMessage,
     connectWithBluetooth,
     connectWithUsb,
-  } = useConnectionCheck()
-  const returnTo = searchParams.get("returnTo")
+  } = useConnectionCheck();
+  const returnTo = searchParams.get("returnTo");
 
   useEffect(() => {
     if (phase !== "connected" || !sessionId || !returnTo) {
-      return
+      return;
     }
 
-    const isSafeInternalRoute =
-      returnTo.startsWith("/") && !returnTo.startsWith("//")
-    if (isSafeInternalRoute) {
-      router.push(returnTo)
+    if (isSafeInternalRoute(returnTo)) {
+      router.push(returnTo);
     }
-  }, [phase, returnTo, router, sessionId])
+  }, [phase, returnTo, router, sessionId]);
 
   return (
     <main className="bg-canvas text-base min-h-screen">
@@ -107,7 +106,7 @@ function ConnectPageContent() {
         ) : null}
       </div>
     </main>
-  )
+  );
 }
 
 export default function ConnectPage() {
@@ -125,5 +124,5 @@ export default function ConnectPage() {
     >
       <ConnectPageContent />
     </Suspense>
-  )
+  );
 }

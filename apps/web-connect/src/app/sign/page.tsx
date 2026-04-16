@@ -1,19 +1,22 @@
-"use client"
+"use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { Button } from "@ledgerhq/lumen-ui-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { DeviceStatus } from "@ledgerhq/device-management-kit"
-
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@ledgerhq/lumen-ui-react";
 import {
-  StructuredTransactionFields,
-  useSignTransaction,
-} from "@/hooks/useSignTransaction"
-import { useDeviceSession } from "@/providers/DeviceSessionProvider"
-import { useDmk } from "@/providers/DmkProvider"
+  buildCallbackUrl,
+  buildSignatureHex,
+  encodeReturnToSignRoute,
+  parseStructuredFields,
+} from "@ledgerhq/ledger-connect-core";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DeviceStatus } from "@ledgerhq/device-management-kit";
 
-const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0"
-const DISCONNECT_GRACE_MS = 1200
+import { useSignTransaction } from "@/hooks/useSignTransaction";
+import { useDeviceSession } from "@/providers/DeviceSessionProvider";
+import { useDmk } from "@/providers/DmkProvider";
+
+const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
+const DISCONNECT_GRACE_MS = 1200;
 
 function SignPageFallback() {
   return (
@@ -22,93 +25,58 @@ function SignPageFallback() {
         <p className="body-2 text-muted">Preparing the signing flow...</p>
       </div>
     </main>
-  )
-}
-
-function buildSignatureHex(signature: { r: string; s: string; v: number }) {
-  const vHex = `0x${signature.v.toString(16).padStart(2, "0")}`
-  return `${signature.r}${signature.s.slice(2)}${vHex.slice(2)}`
-}
-
-function parseStructuredFields(
-  searchParams: URLSearchParams,
-): StructuredTransactionFields | null {
-  const to = searchParams.get("to")
-  const value = searchParams.get("value")
-  const gasLimit = searchParams.get("gasLimit")
-  const chainId = searchParams.get("chainId")
-
-  if (!to || !gasLimit || !chainId) {
-    return null
-  }
-
-  return {
-    to,
-    value: value ?? "0",
-    data: searchParams.get("data") ?? undefined,
-    gasLimit,
-    chainId: Number(chainId),
-  }
+  );
 }
 
 function SignPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const dmk = useDmk()
-  const { sessionId, setSessionId } = useDeviceSession()
-  const { state, signTransaction, cancel } = useSignTransaction()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dmk = useDmk();
+  const { sessionId, setSessionId } = useDeviceSession();
+  const { state, signTransaction, cancel } = useSignTransaction();
 
-  const txParam = searchParams.get("tx") ?? ""
-  const callbackParam = searchParams.get("callback")
-  const initialPath = searchParams.get("path") ?? DEFAULT_DERIVATION_PATH
+  const txParam = searchParams.get("tx") ?? "";
+  const callbackParam = searchParams.get("callback");
+  const initialPath = searchParams.get("path") ?? DEFAULT_DERIVATION_PATH;
 
   const structuredFields = useMemo(
     () => parseStructuredFields(searchParams),
     [searchParams],
-  )
+  );
 
-  const hasTransaction = !!(txParam || structuredFields)
-  const [canSign, setCanSign] = useState(false)
-  const [deviceHint, setDeviceHint] = useState<string | null>(null)
-  const disconnectTimeoutRef = useRef<number | null>(null)
+  const hasTransaction = !!(txParam || structuredFields);
+  const [canSign, setCanSign] = useState(false);
+  const [deviceHint, setDeviceHint] = useState<string | null>(null);
+  const disconnectTimeoutRef = useRef<number | null>(null);
 
   const encodedReturnTo = useMemo(() => {
-    const params = searchParams.toString()
-    return encodeURIComponent(params ? `/sign?${params}` : "/sign")
-  }, [searchParams])
+    return encodeReturnToSignRoute(searchParams);
+  }, [searchParams]);
 
   useEffect(() => {
     if (sessionId) {
-      return
+      return;
     }
-    router.replace(`/connect?returnTo=${encodedReturnTo}`)
-  }, [encodedReturnTo, router, sessionId])
+    router.replace(`/connect?returnTo=${encodedReturnTo}`);
+  }, [encodedReturnTo, router, sessionId]);
 
   useEffect(() => {
     if (state.status !== "completed" || !callbackParam) {
-      return
+      return;
     }
 
     try {
-      const callbackUrl = new URL(callbackParam)
-      callbackUrl.searchParams.set(
-        "signature",
-        buildSignatureHex(state.signature),
-      )
-      callbackUrl.searchParams.set("r", state.signature.r)
-      callbackUrl.searchParams.set("s", state.signature.s)
-      callbackUrl.searchParams.set("v", String(state.signature.v))
-      window.location.assign(callbackUrl.toString())
+      window.location.assign(buildCallbackUrl(callbackParam, state.signature));
     } catch {
       // Callback is optional and may be invalid. Keep the signature visible in UI.
     }
-  }, [callbackParam, state])
+  }, [callbackParam, state]);
 
   useEffect(() => {
     if (!sessionId) {
-      setCanSign(false)
-      setDeviceHint("Connect and unlock your Ledger device to continue.")
-      return
+      setCanSign(false);
+      setDeviceHint("Connect and unlock your Ledger device to continue.");
+      return;
     }
 
     const stateSub = dmk.getDeviceSessionState({ sessionId }).subscribe({
@@ -117,66 +85,66 @@ function SignPageContent() {
           case DeviceStatus.CONNECTED:
           case DeviceStatus.BUSY:
             if (disconnectTimeoutRef.current !== null) {
-              window.clearTimeout(disconnectTimeoutRef.current)
-              disconnectTimeoutRef.current = null
+              window.clearTimeout(disconnectTimeoutRef.current);
+              disconnectTimeoutRef.current = null;
             }
-            setCanSign(true)
-            setDeviceHint(null)
-            break
+            setCanSign(true);
+            setDeviceHint(null);
+            break;
           case DeviceStatus.LOCKED:
             if (disconnectTimeoutRef.current !== null) {
-              window.clearTimeout(disconnectTimeoutRef.current)
-              disconnectTimeoutRef.current = null
+              window.clearTimeout(disconnectTimeoutRef.current);
+              disconnectTimeoutRef.current = null;
             }
-            setCanSign(false)
+            setCanSign(false);
             setDeviceHint(
               "Unlock your Ledger device with your PIN before starting the signing flow.",
-            )
-            break
+            );
+            break;
           case DeviceStatus.NOT_CONNECTED:
-            setCanSign(false)
+            setCanSign(false);
             if (disconnectTimeoutRef.current === null) {
               disconnectTimeoutRef.current = window.setTimeout(() => {
-                setDeviceHint("Your Ledger device is no longer connected.")
-                setSessionId(null)
-                disconnectTimeoutRef.current = null
-              }, DISCONNECT_GRACE_MS)
+                setDeviceHint("Your Ledger device is no longer connected.");
+                setSessionId(null);
+                disconnectTimeoutRef.current = null;
+              }, DISCONNECT_GRACE_MS);
             }
-            break
+            break;
           default:
-            break
+            break;
         }
       },
       error: (error) => {
-        setCanSign(false)
+        setCanSign(false);
         setDeviceHint(
           error instanceof Error
             ? error.message
             : "Could not read the Ledger device state.",
-        )
+        );
       },
-    })
+    });
 
     return () => {
       if (disconnectTimeoutRef.current !== null) {
-        window.clearTimeout(disconnectTimeoutRef.current)
-        disconnectTimeoutRef.current = null
+        window.clearTimeout(disconnectTimeoutRef.current);
+        disconnectTimeoutRef.current = null;
       }
-      stateSub.unsubscribe()
-    }
-  }, [dmk, sessionId, setSessionId])
+      stateSub.unsubscribe();
+    };
+  }, [dmk, sessionId, setSessionId]);
 
   const handleSign = () => {
     if (!canSign) {
-      return
+      return;
     }
 
     if (structuredFields) {
-      signTransaction({ derivationPath: initialPath, structuredFields })
+      signTransaction({ derivationPath: initialPath, structuredFields });
     } else {
-      signTransaction({ derivationPath: initialPath, transaction: txParam })
+      signTransaction({ derivationPath: initialPath, transaction: txParam });
     }
-  }
+  };
 
   return (
     <main className="bg-canvas text-base min-h-screen">
@@ -260,7 +228,7 @@ function SignPageContent() {
         ) : null}
       </div>
     </main>
-  )
+  );
 }
 
 export default function SignPage() {
@@ -268,5 +236,5 @@ export default function SignPage() {
     <Suspense fallback={<SignPageFallback />}>
       <SignPageContent />
     </Suspense>
-  )
+  );
 }

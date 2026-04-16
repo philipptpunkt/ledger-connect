@@ -2,6 +2,7 @@
 const nextConfig = {
   output: "standalone",
   transpilePackages: [
+    "@ledgerhq/ledger-connect-core",
     "@ledgerhq/context-module",
     "@ledgerhq/device-management-kit",
     "@ledgerhq/device-signer-kit-ethereum",

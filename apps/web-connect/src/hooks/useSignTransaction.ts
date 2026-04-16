@@ -7,8 +7,13 @@ import {
   ContextModuleBuilder,
 } from "@ledgerhq/context-module";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+import {
+  buildTransactionFromFields,
+  parseTransactionInput,
+  type StructuredTransactionFields,
+  toErrorMessage,
+} from "@ledgerhq/ledger-connect-core";
 import { SignerEthBuilder } from "@ledgerhq/device-signer-kit-ethereum";
-import { ethers } from "ethers";
 import { type Subscription } from "rxjs";
 
 import { useDeviceSession } from "@/providers/DeviceSessionProvider";
@@ -19,14 +24,6 @@ const DEFAULT_ORIGIN_TOKEN =
 const ORIGIN_TOKEN =
   process.env.NEXT_PUBLIC_GATING_TOKEN ?? DEFAULT_ORIGIN_TOKEN;
 const APP_SOURCE = process.env.NEXT_PUBLIC_APP_SOURCE ?? "ledger-connect";
-
-export type StructuredTransactionFields = {
-  to: string;
-  value: string;
-  data?: string;
-  gasLimit: string;
-  chainId: number;
-};
 
 export type SignTransactionParams = {
   derivationPath: string;
@@ -50,54 +47,6 @@ export type SignTransactionState =
       status: "error";
       message: string;
     };
-
-function toErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "object" && error && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.length > 0) {
-      return message;
-    }
-  }
-
-  return fallback;
-}
-
-function parseTransactionInput(transaction: string): Uint8Array {
-  let rawTx = transaction;
-
-  try {
-    const jsonTx = JSON.parse(transaction) as Record<string, unknown>;
-    if ("from" in jsonTx) {
-      delete jsonTx.from;
-    }
-    rawTx = ethers.Transaction.from(jsonTx).unsignedSerialized;
-  } catch {
-    rawTx = ethers.Transaction.from(transaction).unsignedSerialized;
-  }
-
-  return ethers.getBytes(rawTx);
-}
-
-function buildTransactionFromFields(
-  fields: StructuredTransactionFields,
-): Uint8Array {
-  const tx = ethers.Transaction.from({
-    to: fields.to,
-    value: ethers.getBigInt(fields.value || "0"),
-    data: fields.data || "0x",
-    gasLimit: ethers.getBigInt(fields.gasLimit),
-    chainId: fields.chainId,
-    type: 2,
-    maxFeePerGas: ethers.parseUnits("30", "gwei"),
-    maxPriorityFeePerGas: ethers.parseUnits("1", "gwei"),
-    nonce: 0,
-  });
-  return ethers.getBytes(tx.unsignedSerialized);
-}
 
 export function useSignTransaction() {
   const dmk = useDmk();
